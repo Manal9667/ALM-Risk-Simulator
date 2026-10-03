@@ -1,0 +1,8 @@
+# ALM Risk Simulator - Phase 1 dependencies
+# Educational project. Not a production ALM system.
+numpy>=1.26
+pandas>=2.1
+scipy>=1.11
+requests>=2.31
+matplotlib>=3.8     # used in Phase 2 (plots)
+pytest>=7.4
