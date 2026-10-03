@@ -246,14 +246,14 @@ def bootstrap_zero_curve(
     boot_tenors: list[float] = []
     boot_zeros: list[float] = []
 
-    def interp_zero(t: float) -> float:
-        """Interpolate the zero rate using the pillars bootstrapped so far."""
-        if not boot_tenors:
-            raise RuntimeError("no pillars bootstrapped yet")
-        return float(np.interp(t, boot_tenors, boot_zeros))
-
     def df_from(t: float, trial_tenor: float, trial_zero: float) -> float:
-        """DF at ``t`` using bootstrapped pillars plus a trial (tenor, zero)."""
+        """DF at ``t`` using bootstrapped pillars plus a trial ``(tenor, zero)``.
+
+        The trial pillar is appended so that coupon dates between the previous
+        pillar and ``trial_tenor`` are interpolated *toward the unknown zero*,
+        exactly as the finished curve will interpolate them. This keeps the
+        bootstrap self-consistent so par instruments reprice to par.
+        """
         xs = boot_tenors + [trial_tenor]
         ys = boot_zeros + [trial_zero]
         z = float(np.interp(t, xs, ys))
@@ -271,8 +271,6 @@ def bootstrap_zero_curve(
         def price_minus_par(z_trial: float, _tenor: float = tenor,
                             _par: float = par) -> float:
             def df_at(t: float) -> float:
-                if t < _tenor - 1e-12:
-                    return (1.0 + interp_zero(t)) ** (-t)
                 return df_from(t, _tenor, z_trial)
             return _par_bond_price(_par, _tenor, freq, df_at) - 100.0
 
