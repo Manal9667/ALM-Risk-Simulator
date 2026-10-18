@@ -13,13 +13,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .config import Config, DEFAULT_CONFIG
-from . import bonds, data_fetch, db, duration as dur, liabilities, validation
+from . import bonds, data_fetch, db, duration as dur, liabilities, scenarios, validation
 from .curve import Curve, bootstrap_zero_curve
 
 
 @dataclass
 class BaseCase:
-    """Everything the base-case run produces, for reuse by Phase 2."""
+    """Everything the base-case run produces, for reuse by scenarios and the dashboard."""
 
     curve: Curve
     source_tag: str
@@ -65,7 +65,8 @@ def build_base_case(cfg: Config | None = None, write: bool = True) -> BaseCase:
 
 
 def _fmt_money(x: float) -> str:
-    return f"${x:,.0f}"
+    r = round(x)
+    return f"-${abs(r):,.0f}" if r < 0 else f"${r:,.0f}"
 
 
 def print_report(base: BaseCase, cfg: Config | None = None) -> None:
@@ -128,6 +129,48 @@ def print_report(base: BaseCase, cfg: Config | None = None) -> None:
     print()
 
 
+def print_scenarios(base: BaseCase, cfg: Config | None = None) -> None:
+    """Print shocked funding ratios, the key-rate hedge and model-risk checks."""
+    cfg = cfg or DEFAULT_CONFIG
+    sheet = scenarios.BalanceSheet.from_base_case(base, cfg)
+    hedge = scenarios.solve_key_rate_hedge(sheet, base.curve)
+    hedged = sheet.with_hedge(hedge)
+    un = scenarios.run_scenarios(sheet, base.curve)
+    he = scenarios.run_scenarios(hedged, base.curve)
+
+    print("Rate-shock scenarios (full revaluation, liability cash flows frozen)")
+    print("-" * 72)
+    print(f"  {'scenario':<34} | {'FR unhedged':>11} | {'FR hedged':>9} | "
+          f"{'dSurplus un':>12} | {'dSurplus h':>10}")
+    for (_, u), (_, h) in zip(un.iterrows(), he.iterrows()):
+        print(f"  {u.scenario:<34} | {u.funding_ratio:>11.4f} | "
+              f"{h.funding_ratio:>9.4f} | {u.d_surplus/1e6:>10.1f}M | "
+              f"{h.d_surplus/1e6:>8.1f}M")
+    print()
+
+    print("Key-rate hedge overlay (zero-cost; zero-coupon Treasury exposures)")
+    print("-" * 72)
+    for k, mv in hedge.strip_mv.items():
+        side = "receive/long" if mv > 0 else "pay/short"
+        print(f"  {k:>5.0f}y : {_fmt_money(mv):>16}  ({side})")
+    print(f"  gross overlay notional    : {_fmt_money(hedge.gross_notional_mv)}")
+    print(f"  net DV01 before -> after  : {_fmt_money(sheet.net_dv01(base.curve))}"
+          f" -> {_fmt_money(hedged.net_dv01(base.curve))}")
+    print()
+
+    print("Model-risk sensitivities")
+    print("-" * 72)
+    sp = scenarios.spread_sensitivity(base.curve, base.portfolio.market_value, cfg=cfg)
+    print("  Liability discount spread -> liability duration / duration gap / net DV01")
+    for _, r in sp.iterrows():
+        print(f"    {r.liability_spread_bps:>5.0f}bp : {r.liability_duration:6.2f}y | "
+              f"{r.duration_gap:6.2f}y | {_fmt_money(r.net_dv01)}")
+    ip = scenarios.interpolation_sensitivity(sheet, base.curve)
+    print(f"  Interpolation (linear-zero vs log-linear DF): liability PV differs by "
+          f"{ip['difference_bps_of_pv']:.1f}bp ({_fmt_money(ip['log_linear_df_pv'] - ip['linear_zero_pv'])})")
+    print()
+
+
 def run(cfg: Config | None = None) -> BaseCase:
     """Build the base case, persist to SQLite, validate, aggregate and report."""
     cfg = cfg or DEFAULT_CONFIG
@@ -146,6 +189,7 @@ def run(cfg: Config | None = None) -> BaseCase:
         conn.close()
 
     print_report(base, cfg)
+    print_scenarios(base, cfg)
 
     print("Data-quality validation (generated base-case data)")
     print("-" * 72)

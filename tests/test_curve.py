@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from src.config import DEFAULT_CONFIG, CurveConfig
 from src.curve import Curve, bootstrap_zero_curve, shift as shift_fn
 from src.duration import price_at_yield
 
@@ -69,6 +70,16 @@ def test_key_rate_bump_is_local(fixture_curve):
     at_2 = diff[np.argmin(np.abs(tenors - 2.0))]
     assert at_10 == pytest.approx(0.0050, abs=1e-9)   # 50bp at the key tenor
     assert at_2 == pytest.approx(0.0, abs=1e-12)       # far away: untouched
+
+
+def test_curve_bootstrap_uses_configured_short_end_cutoff():
+    custom = DEFAULT_CONFIG.with_overrides(
+        curve=CurveConfig(par_bond_min_tenor_years=3.0)
+    )
+    par_yields = {0.5: 0.02, 1.0: 0.03, 2.0: 0.035, 3.0: 0.04, 5.0: 0.045}
+    curve = bootstrap_zero_curve(par_yields, custom.curve)
+    assert curve.zero_rate(2.0) == pytest.approx(0.035)
+    assert curve.zero_rate(3.0) != pytest.approx(0.04)
 
 
 def test_curve_rejects_bad_inputs():

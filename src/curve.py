@@ -138,7 +138,7 @@ class Curve:
         """General shock. ``f(t)`` returns a shift in **basis points** at tenor
         ``t``; the shift is applied to the zero rate at each pillar.
 
-        Phase 2 uses this for non-parallel scenarios (steepeners, twists, ...).
+        Used for non-parallel scenarios (steepeners, twists, ...).
         The shift is sampled at the existing pillars and interpolated linearly
         between them, consistent with the curve's interpolation scheme.
         """
@@ -240,7 +240,9 @@ def bootstrap_zero_curve(
     """
     cfg = config or DEFAULT_CONFIG.curve
     freq = cfg.bootstrap_frequency
-    short_cutoff = DEFAULT_CONFIG.fred.par_bond_min_tenor_years
+    short_cutoff = cfg.par_bond_min_tenor_years
+    if short_cutoff <= 0:
+        raise ValueError("par_bond_min_tenor_years must be positive")
 
     tenors = sorted(par_yields)
     boot_tenors: list[float] = []
@@ -308,7 +310,7 @@ def curve_from_tenor_rate_map(
 
 
 # A convenience: module-level general shift mirroring ``Curve.shift`` so callers
-# can write ``shift(curve, f)`` as described in the Phase 1 spec.
+# can write ``shift(curve, f)``.
 def shift(curve: Curve, f: Callable[[float], float]) -> Curve:
     """Return a new curve with ``f(t)`` (basis points) added to each pillar."""
     return curve.shift(f)

@@ -326,7 +326,7 @@ def alm_metrics(
     asset_dv01: float | None = None,
     liability_dv01: float | None = None,
 ) -> ALMMetrics:
-    """Compute core ALM metrics so Phase 2 scenario code can reuse them.
+    """Compute core ALM metrics for reuse by the scenario code.
 
     Definitions
     -----------

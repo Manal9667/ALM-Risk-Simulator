@@ -6,7 +6,7 @@ a tolerance, a calibration target, a URL) is named and documented here.
 
 Nothing in this module touches the network or the filesystem; it only declares
 values. Instances are created with sensible defaults and can be overridden by
-callers (Phase 2 scenario code is expected to build modified copies).
+callers (scenario code builds modified copies).
 """
 
 from __future__ import annotations
@@ -116,6 +116,11 @@ class CurveConfig:
     #: Coupon frequency (per year) assumed for the par Treasury instruments
     #: when bootstrapping zero rates. Treasuries pay semiannually.
     bootstrap_frequency: int = 2
+
+    #: Tenor threshold separating short-end money-market quotes from coupon-bearing
+    #: par instruments in the Treasury curve bootstrap. This is the curve-level
+    #: setting used by the curve logic; it should match the FRED series coverage.
+    par_bond_min_tenor_years: float = 2.0
 
     #: Compounding frequency per year for the zero rates we store. We store and
     #: interpolate annually-compounded zero rates (see curve.py docstring).
@@ -245,7 +250,7 @@ class Config:
     validation: ValidationConfig = field(default_factory=ValidationConfig)
 
     def with_overrides(self, **changes: object) -> "Config":
-        """Return a copy with top-level fields replaced (helper for Phase 2)."""
+        """Return a copy with top-level fields replaced."""
         return replace(self, **changes)
 
 
