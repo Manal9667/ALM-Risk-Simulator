@@ -1,12 +1,12 @@
 # ALM Risk Simulator
 
-![tests](https://github.com/<your-username>/ALM-Risk-Simulator/actions/workflows/ci.yml/badge.svg)
+![tests](https://github.com/<Manal9667>/ALM-Risk-Simulator/actions/workflows/ci.yml/badge.svg)
 
 Interest-rate risk for a simplified life insurer: price a bond book and a long-dated liability stream on a bootstrapped Treasury curve, measure the mismatch (duration, DV01, key-rate DV01), shock the curve, and hedge it.
 
 > **Educational model, not a production ALM engine.** Only the Treasury par-yield curve is real (FRED). The bond portfolio, credit spreads and liability book are hypothetical and labelled as such.
 
-**Live dashboard:** _add your Streamlit Community Cloud link here_
+**Live dashboard:** (https://alm-risk-simulator.streamlit.app/)
 
 ## Headline result
 
