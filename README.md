@@ -12,8 +12,6 @@ Interest-rate risk for a simplified life insurer: price a bond book and a long-d
 
 The hypothetical insurer starts 107.5% funded but is badly mismatched: assets have a duration of **6.1 years** against **11.3 years** for liabilities (net DV01 **-$445k per bp**). Falling rates hurt, because liabilities are the longer instrument. Results below use the FRED Treasury curve as of **15 Oct 2026**.
 
-![Funding ratio under parallel rate shocks](docs/funding_ratio_vs_shock.png)
-
 | | Unhedged | With key-rate overlay |
 |---|---|---|
 | Funding ratio, -200bp parallel | **95.9%** (underfunded) | 105.7% |
