@@ -10,23 +10,23 @@ Interest-rate risk for a simplified life insurer: price a bond book and a long-d
 
 ## Headline result
 
-The hypothetical insurer starts 107.5% funded but is badly mismatched: assets have a duration of **6.5 years** against **12.3 years** for liabilities (net DV01 **-$491k per bp**). Falling rates hurt, because liabilities are the longer instrument.
+The hypothetical insurer starts 107.5% funded but is badly mismatched: assets have a duration of **6.1 years** against **11.3 years** for liabilities (net DV01 **-$445k per bp**). Falling rates hurt, because liabilities are the longer instrument. Results below use the FRED Treasury curve as of **15 Oct 2026**.
 
 ![Funding ratio under parallel rate shocks](docs/funding_ratio_vs_shock.png)
 
 | | Unhedged | With key-rate overlay |
 |---|---|---|
-| Funding ratio, -200bp parallel | **94.8%** (underfunded) | 105.5% |
-| Funding ratio, +200bp parallel | 119.7% | 109.2% |
-| Worst surplus swing across 9 scenarios | **$131.8M** | **$2.9M** (-98%) |
-| Net DV01 | -$491,140 | $0 |
-| Break-even shock to 100% funded | about -119bp | n/a |
+| Funding ratio, -200bp parallel | **95.9%** (underfunded) | 105.7% |
+| Funding ratio, +200bp parallel | 118.5% | 109.1% |
+| Worst surplus swing across 9 scenarios | **$117.7M** | **$2.1M** (-98%) |
+| Net DV01 | -$445,399 | $0 |
+| Break-even shock to 100% funded | about -131bp | n/a |
 
 The overlay is a zero-cost set of zero-coupon Treasury positions (short 2-5y, long 10-30y) sized so that net DV01 is zero at every key tenor, which is how insurers hedge in practice with swaps and futures.
 
 ![Key-rate DV01: assets vs liabilities](docs/key_rate_dv01.png)
 
-What the overlay does **not** fix is convexity and risk between key tenors. That is the ~$3M residual in the -200bp case, and the scenario table reports it rather than hiding it. Reproduce every number with `python -m src.pipeline`.
+What the overlay does **not** fix is convexity and risk between key tenors. That is the ~$2M residual in the -200bp case, and the scenario table reports it rather than hiding it. Reproduce every number with `python -m src.pipeline` (figures move with the curve date; the committed snapshot is 2026-10-15).
 
 ## Problem being solved
 
@@ -190,8 +190,8 @@ No secrets or credentials are required for the default setup. The project does n
 
 ### Model-risk checks
 
-- **Liability discount spread (0 to 100bp):** liability duration moves from 12.5y to 11.6y and net DV01 from -$512k to -$432k. The hedge ratio is sensitive to this assumption.
-- **Interpolation:** valuing the same pillars log-linearly on discount factors instead of linearly on zeros changes liability PV by about -15bp (-$1.4M), small next to the rate risk but not zero.
+- **Liability discount spread (0 to 100bp):** liability duration moves from 11.5y to 10.7y and net DV01 from -$464k to -$393k. The hedge ratio is sensitive to this assumption.
+- **Interpolation:** valuing the same pillars log-linearly on discount factors instead of linearly on zeros changes liability PV by about -27bp (-$2.5M), small next to the rate risk but not zero.
 
 ### Sign and unit conventions
 
@@ -250,7 +250,7 @@ This is a simplified educational model. It does not attempt to represent:
 - real insurer policy cash-flow behaviour (lapses, mortality, optionality), so there is no stochastic or option-adjusted treatment
 - liquidity-adjusted valuation frameworks or regulatory capital (Solvency II, RBC)
 - an arbitrage-free curve (linear-on-zeros interpolation; the effect is quantified above)
-- realistic hedge frictions: the overlay uses idealised zero-coupon exposures with no bid-ask, margin or basis risk, and the gross notional (~$620M, about 63% of assets) is large
+- realistic hedge frictions: the overlay uses idealised zero-coupon exposures with no bid-ask, margin or basis risk, and the gross notional (~$599M, about 60% of assets) is large
 - the starting 107.5% funding ratio, which is a calibration input, not a result
 
 In production the next steps would be an arbitrage-free curve, policyholder behaviour models and a constrained optimiser over real hedge instruments.
